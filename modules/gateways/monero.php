@@ -2,18 +2,18 @@
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
-
-
+use WHMCS\Database\Capsule;
 
 function monero_MetaData()
 {
     return array(
         'DisplayName' => 'Monero',
-        'APIVersion' => '1.1', // Use API Version 1.1
+        'APIVersion' => '1.1', // Use API Version 1.1 (compatible with WHMCS 8.2)
         'DisableLocalCredtCardInput' => true,
         'TokenisedStorage' => false,
     );
 }
+
 function monero_Config(){
 	return array(
 		'FriendlyName' => array('Type' => 'System','Value' => 'Monero'),
@@ -27,22 +27,13 @@ function monero_Config(){
     );
 }
 
-/*
-*  
-*  Get the current XMR price in several currencies
-*  
-*  @param String $currencies  List of currency codes separated by comma
-*  
-*  @return String  A json string in the format {"CURRENCY_CODE":PRICE}
-*  
-*/
 function monero_retrivePriceList($currencies = 'BTC,USD,EUR,CAD,INR,GBP,BRL') {
 	
 	$source = 'https://min-api.cryptocompare.com/data/price?fsym=XMR&tsyms='.$currencies.'&extraParams=monero_woocommerce';
 	
 	if (ini_get('allow_url_fopen')) {
 		
-		return file_get_contents($source);
+		return @file_get_contents($source);
 		
 	}
 	
@@ -77,6 +68,7 @@ function monero_retrivePriceList($currencies = 'BTC,USD,EUR,CAD,INR,GBP,BRL') {
 	return $xmr_price;
 	
 }
+
 function monero_retriveprice($currency) {
 	global $currency_symbol;
 	$xmr_price = monero_retrivePriceList('BTC,USD,EUR,CAD,INR,GBP,BRL');
@@ -114,7 +106,6 @@ function monero_retriveprice($currency) {
 	}
 }
 
-
 function monero_changeto($amount, $currency){
     $xmr_live_price = monero_retriveprice($currency);
 	$live_for_storing = $xmr_live_price * 100; //This will remove the decimal so that it can easily be stored as an integer
@@ -132,7 +123,7 @@ function xmr_to_fiat($amount, $currency){
 }
 
 function monero_link($params){
-global $currency_symbol;
+$currency_symbol = '';
 
 $gatewaymodule = "monero";
 $gateway = getGatewayVariables($gatewaymodule);
@@ -143,8 +134,8 @@ if(!$gateway["type"]) die("Module not activated");
 	$amount = $params['amount'];
 
  	$bonus_setting = $gateway['bonus_percentage'];
- 	$bonus_percentage = 100 - (preg_replace("/[^0-9]/", "", $bonus_setting));
-// 	$amount = money_format('%i', $amount * ($bonus_percentage / 100));
+ 	$bonus_percentage = preg_replace("/[^0-9]/", "", $bonus_setting);
+ 	$amount = number_format($amount * (1 + $bonus_percentage / 100), 2, '.', '');
 	$currency = $params['currency'];
 	$client_id = $params['clientdetails']['id'];
 	$firstname = $params['clientdetails']['firstname'];
@@ -183,7 +174,7 @@ if(!$gateway["type"]) die("Module not activated");
     $form .= '</form>';
 	$form .= '<p>'.$amount_xmr. " XMR (". $currency_symbol . $amount . " " . $currency .')</p>';
 	if ($bonus_setting > 0) {
-		$form .='<p><small>Bonus to be applied: ' . preg_replace("/[^0-9]/", "", $bonus_setting) . '% </small></p>';
+		$form .='<p><small>Bonus to be applied: ' . $bonus_percentage . '% </small></p>';
 	}
     return $form;
 }

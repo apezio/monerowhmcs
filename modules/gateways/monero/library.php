@@ -1,4 +1,6 @@
 <?php
+namespace WHMCS\Module\Gateway\Monero;
+
 /**
  * library.php
  *
@@ -10,7 +12,7 @@
  * Modified to work with monero-rpc wallet by Serhack and cryptochangements
  */
  
-class Monero_rpc
+class MoneroLib
 {
     protected $url = null, $is_debug = false, $parameters_structure = 'array';
 
@@ -33,11 +35,11 @@ class Monero_rpc
         503 => '503 Service Unavailable'
     );
    
-    public function __construct($pUrl, $pUser = null, $pPass = null) {
+    public function __construct($pUrl = null, $pUser = null, $pPass = null) {
 
 		$gatewayx = getGatewayVariables("monero");
-        $this->validate(false === extension_loaded('curl'), 'The curl extension must be loaded for using this class!');
-        $this->validate(false === extension_loaded('json'), 'The json extension must be loaded for using this class!');
+        $this->validate(!extension_loaded('curl'), 'The curl extension must be loaded for using this class!');
+        $this->validate(!extension_loaded('json'), 'The json extension must be loaded for using this class!');
 		$this->url = $gatewayx['daemon_host']. ":" .$gatewayx['daemon_port'] . "/json_rpc";
 		$this->username = $gatewayx['daemon_user'];
 		$this->password = $gatewayx['daemon_pass'];
@@ -344,4 +346,4 @@ class Monero_rpc
       $get_bulk_payments = $this->_run('get_bulk_payments', $get_bulk_payments_parameters);
       return $get_bulk_payments;
 	}
-} 
+}

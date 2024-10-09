@@ -1,8 +1,9 @@
 <?php
-include("../../../init.php"); 
-include("../../../includes/functions.php");
-include("../../../includes/gatewayfunctions.php");
-include("../../../includes/invoicefunctions.php");
+use WHMCS\Database\Capsule;
+use WHMCS\Module\Gateway\Monero\MoneroLib;
+
+require_once __DIR__ . '/../../../init.php';
+require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -20,14 +21,14 @@ function monero_payment_id($invoice_id){
     if(!isset($_COOKIE["payment_id$invoice_id"])) { 
 		$payment_id  = bin2hex(openssl_random_pseudo_bytes(8));
 		// create one cookie per invoice_id.
-		setcookie("payment_id$invoice_id", $payment_id, time()+2700);
+		setcookie("payment_id$invoice_id", $payment_id, time()+2700, '/', '', true, true);
 	} else {
 		$payment_id = $_COOKIE["payment_id$invoice_id"];
     }
 		return $payment_id;
 }
 
-$monero_daemon = new Monero_rpc($link);
+$monero_daemon = new MoneroLib($link);
 
 $message = "Waiting for your payment.";
 $_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
@@ -149,4 +150,3 @@ $.ajax({ url : 'verify.php',
 verify();
 setInterval(function(){ verify()}, 5000);
 </script>";
-?>

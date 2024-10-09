@@ -1,11 +1,10 @@
 <?php
+use WHMCS\Database\Capsule;
+use WHMCS\Module\Gateway\Monero\MoneroLib;
 
-include("../../../init.php"); 
-include("../../../includes/functions.php");
-include("../../../includes/gatewayfunctions.php");
-include("../../../includes/invoicefunctions.php");
-
-use Illuminate\Database\Capsule\Manager as Capsule;
+require_once __DIR__ . '/../../../init.php';
+require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
+require_once __DIR__ . '/../../../includes/invoicefunctions.php';
 
 $fee = "0.0";
 $status = "unknown";
@@ -24,12 +23,10 @@ $client_id = $_POST['client_id'];
 $secretKey = $GATEWAY['secretkey'];
 $link = $GATEWAY['daemon_host'].":".$GATEWAY['daemon_port']."/json_rpc";
 
-require_once('library.php');
-
+$monero_daemon = new MoneroLib($link);
 
 function verify_payment($payment_id, $amount, $amount_xmr, $invoice_id, $fee, $status, $gatewaymodule, $hash, $secretKey, $currency, $client_id){
 	global $currency_symbol;
-	$monero_daemon = new Monero_rpc($link);
 	$check_mempool = true;
 	//Checks invoice ID is a valid invoice number 
 	$invoice_id = checkCbInvoiceID($invoice_id, $gatewaymodule);
@@ -60,7 +57,7 @@ function verify_payment($payment_id, $amount, $amount_xmr, $invoice_id, $fee, $s
 		$get_payments_method = $monero_daemon->get_payments($payment_id);
 		foreach ($get_payments_method["payments"] as $tx => $transactions) {
 			$txn_amt = $transactions["amount"];
-			$txn_txid = $transactions["tx_hash"];
+			$txn_txid = $transactions["txid"];
 			$txn_payment_id = $transactions["payment_id"];
 			if(isset($txn_amt)) { 
 				return handle_whmcs($invoice_id, $amount_xmr, $txn_amt, $txn_txid, $txn_payment_id, $payment_id, $currency, $gatewaymodule, $client_id);
@@ -123,7 +120,7 @@ function handle_whmcs($invoice_id, $amount_xmr, $txn_amt, $txn_txid, $txn_paymen
 				$results = localAPI("UpdateInvoice", $postData, $adminUsername);
 				return "Payment has been received.";
 			}
-			$money_balance = money_format('%i', $invoice_balance);
+			$money_balance = number_format($invoice_balance, 2, '.', '');
 			$xmr_remaining = monero_changeto($money_balance, $currency);
 
 			return "Error: We received " . $txn_amt / 1000000000000 . " XMR but the remaining balance is still $currency_symbol$money_balance. Please send the remaining $xmr_remaining XMR. Transaction ID: " . $txn_txid . ". Payment ID: " . $payment_id;
@@ -145,9 +142,7 @@ function add_payment($command, $invoice_id, $txn_txid, $gatewaymodule, $fiat_pai
 		'paymentid' => $payment_id,
 		'fees' => $fee,
 	);
-	// Add the invoice payment - either line below would work
-	// $results = localAPI($command, $postData, $adminUsername);
-    	addInvoicePayment($invoice_id,$txn_txid,$fiat_paid,$fee,$gatewaymodule);
+	addInvoicePayment($invoice_id, $txn_txid, $fiat_paid, $fee, $gatewaymodule);
 	logTransaction($gatewaymodule, $postData, "Success: ".$message);
 	
 
@@ -158,23 +153,11 @@ function add_payment($command, $invoice_id, $txn_txid, $gatewaymodule, $fiat_pai
 		$postData = array(
 			'clientid' => $client_id,
 			'description' => "Bonus Credit for paying with Monero on Invoice #$invoice_id via txid $txn_txid",
-			'amount' => money_format('%i', $fiat_paid * ($bonus_percent / 100)),
+			'amount' => number_format($fiat_paid * ($bonus_percent / 100), 2, '.', ''),
 		);
 		$results = localAPI($command, $postData, $adminUsername);
 	}	
 }
-
-
-/*
-function stop_payment($payment_id, $amount, $invoice_id, $fee, $link){
-	$verify = verify_payment($payment_id, $amount, $invoice_id, $fee, $link);
-	if($verify){
-		$message = "Payment has been received and confirmed.";
-	}
-	else{
-		$message = "We are waiting for your payment to be confirmed";
-	}
-} */
 
 
 $vefiry = verify_payment($payment_id, $amount, $amount_xmr, $invoice_id, $fee, $status, $gatewaymodule, $hash, $secretKey, $currency, $client_id);
