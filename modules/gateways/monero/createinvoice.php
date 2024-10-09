@@ -1,13 +1,9 @@
 <?php
-use WHMCS\Database\Capsule;
+use WHMCS\Database\Capsule as Capsule;
 use WHMCS\Module\Gateway\Monero\MoneroLib;
 
 require_once __DIR__ . '/../../../init.php';
 require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 
 $gatewaymodule = "monero";
 $GATEWAY = getGatewayVariables($gatewaymodule);
@@ -133,7 +129,7 @@ $.ajax({ url : 'verify.php',
 	success: function(msg) {
 		console.log(msg);
 		$('#message').text(msg);
-		if(msg=='Payment has been received.') {
+		if(msg === 'Payment has been received.') {
 			//redirect to Paid invoice
             window.location.href = '/viewinvoice.php?id=$invoice_id';
 		}

@@ -1,5 +1,5 @@
 <?php
-use WHMCS\Database\Capsule;
+use WHMCS\Database\Capsule as Capsule;
 use WHMCS\Module\Gateway\Monero\MoneroLib;
 
 require_once __DIR__ . '/../../../init.php';
@@ -111,7 +111,7 @@ function handle_whmcs($invoice_id, $amount_xmr, $txn_amt, $txn_txid, $txn_paymen
 			$results = localAPI($command, $postData, $adminUsername);
 			$invoice_balance = $results['balance'];
 			//		if invoice balance is below 25 cents mark as paid
-			if ($invoice_balance <= ".25") {
+			if ($invoice_balance <= 0.25) {
 				$postData = array(
 					'action' => "UpdateInvoice",
 					'invoiceid' => $invoice_id,

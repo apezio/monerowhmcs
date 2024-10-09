@@ -2,13 +2,13 @@
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
-use WHMCS\Database\Capsule;
+use WHMCS\Database\Capsule as Capsule;
 
 function monero_MetaData()
 {
     return array(
         'DisplayName' => 'Monero',
-        'APIVersion' => '1.1', // Use API Version 1.1 (compatible with WHMCS 8.2)
+        'APIVersion' => '1.1', // Use API Version 1.1
         'DisableLocalCredtCardInput' => true,
         'TokenisedStorage' => false,
     );
@@ -81,7 +81,7 @@ function monero_retriveprice($currency) {
 		return $price['USD'];
 	}
 	if ($currency == 'EUR') {
-		$currency_symbol = "€";
+		$currency_symbol = "â¬";
 		return $price['EUR'];
 	}
 	if ($currency == 'CAD'){
@@ -89,11 +89,11 @@ function monero_retriveprice($currency) {
 		return $price['CAD'];
 	}
 	if ($currency == 'GBP'){
-		$currency_symbol = "£";
+		$currency_symbol = "Â£";
 		return $price['GBP'];
 	}
 	if ($currency == 'INR'){
-		$currency_symbol = "₹";
+		$currency_symbol = "â¹";
 		return $price['INR'];
 	}
 	if ($currency == 'BRL'){
@@ -173,7 +173,7 @@ if(!$gateway["type"]) die("Module not activated");
     $form .= '<input type="submit" value="' . $params['langpaynow'] . '" />';
     $form .= '</form>';
 	$form .= '<p>'.$amount_xmr. " XMR (". $currency_symbol . $amount . " " . $currency .')</p>';
-	if ($bonus_setting > 0) {
+	if ($bonus_percentage > 0) {
 		$form .='<p><small>Bonus to be applied: ' . $bonus_percentage . '% </small></p>';
 	}
     return $form;
